@@ -7,33 +7,40 @@
             show-resize
             must-sort
             selection-use-keys
+            server-sort
             :items="items"
             v-model:headers="headers"
         >
-        <template #footer>
-            <div class="footer">
-                <p>
-                    {{ page }}
-                </p>
-                <div class="pagination">
-                    <v-pagination
-                        v-if="totalPages > 1"
-                        :length="totalPages"
-                        :total-visible="7"
-                        show-first-last
-                        :model-value="page"
-                        @update:model-value="toPage"
-                    />
+            <template #footer>
+                <div class="footer__slot">
+                    <div class="footer__row">
+                        <p>
+                            Summary: {{ summary }} €
+                        </p>
+                    </div>
+                    <div class="footer">
+                        <p>
+                            page: {{ page }}
+                        </p>
+                        <div class="pagination">
+                            <v-pagination
+                                v-if="totalPages > 1"
+                                :length="totalPages"
+                                :total-visible="7"
+                                show-first-last
+                                :model-value="page"
+                                @update:model-value="toPage"
+                            />
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </template>
+            </template>
         </v-table>
     </div>
 </template>
 
 <script>
-import { ref, watch } from 'vue';
-import { useApi } from '@directus/extensions-sdk';
+import { ref, computed } from "vue";
 
 export default {
 	inheritAttrs: false,
@@ -61,20 +68,24 @@ export default {
         },
         toPage: {
             type: Function
+        },
+        layoutQuery: {
+            type: Object
         }
 	},
 
     setup(props) {
-        const api = useApi();
+        const summary = computed(() => {
+            let result = 0;
+            props.items.forEach(item => {
+                result += item.price;
+            })
+            return result;
+        });
 
-        let collectionHeaders = [];
-
-        watch(
-            () => props.page,
-        );
-
-        return { collectionHeaders }
-        
+        return {
+            summary
+        }
     }
 };
 </script>
@@ -84,5 +95,38 @@ export default {
 	display: contents;
 	margin: 20px;
 	margin-bottom: 22px;
+}
+.footer__slot {
+    display: flex;
+    flex-direction: column;
+
+}
+.footer {
+	position: sticky;
+	left: 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	padding: 32px var(--content-padding);
+}
+.pagination {
+	display: inline-block;
+}
+
+.per-page {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	width: 240px;
+	color: var(--foreground-subdued);
+}
+.per-page span {
+	width: auto;
+	margin-right: 4px;
+}
+
+.per-page .v-select {
+	color: var(--foreground-normal);
 }
 </style>

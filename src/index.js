@@ -1,10 +1,10 @@
 import { ref, toRefs } from 'vue';
 import LayoutComponent from './layout.vue';
 import { useItems, useStores, useSync } from '@directus/extensions-sdk';
-
+import { syncRefProperty } from "./utils/sync-ref-property";
 export default {
-	id: 'doulderis-layout',
-	name: 'Doulderis layout',
+	id: 'custom-layout',
+	name: 'Custom layout',
 	icon: 'box',
 	component: LayoutComponent,
 	slots: {
@@ -13,9 +13,12 @@ export default {
 		actions: () => null,
 	},
 
-	setup(props) {
-		const name = ref("Doulderis layout");
-        const { collection, filter, filterUser, search, layoutQuery } = toRefs(props);
+	setup(props, { emit }) {
+		const name = ref("Custom layout");
+        const { collection, filter, filterUser, search } = toRefs(props);
+
+        const layoutQuery = useSync(props, "layoutQuery", emit);
+        const layoutOptions = useSync(props, "layoutOptions", emit);
 
         const { useFieldsStore } = useStores();
         const fieldsStore = useFieldsStore();
@@ -35,13 +38,14 @@ export default {
                 headers.push(headerObject);
             }
         });
-
+        
+        // const page = ref(1);
         const { page } = useItemOptions();
-        const { items, loading, error, totalPages, itemCount, totalCount, changeManualSort, getItems } = useItems(
+        const { items, loading, error, totalPages, itemCount, totalCount, getItems } = useItems(
             collection,
             {
                 page,
-                limit: 1,
+                limit: 2,
                 filter,
                 search,
                 fields: activeFields
@@ -56,7 +60,8 @@ export default {
             filter,
 			search,
             headers,
-            toPage
+            toPage,
+            page,
         };
 
         function refresh() {
@@ -64,12 +69,11 @@ export default {
 		}
 
 		function toPage(newPage) {
-            console.log(newPage)
 			page.value = newPage;
 		}
 
         function useItemOptions() {
-			const page = useSync(layoutQuery, 'page', 1);
+            const page = syncRefProperty(layoutQuery, 'page', 1);
 			return { page };
 		}
 	},
